@@ -1,0 +1,14 @@
+﻿# Mircea's standard .gitignore
+
+*.opensdf
+*.sdf
+*.suo
+*.obj
+*.bak
+*.user
+o/
+*.ipch
+.vs/
+/lib
+exe/
+app/
