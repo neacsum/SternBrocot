@@ -153,6 +153,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="sba.cpp" />
+    <ClCompile Include="sieve.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="sieve.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

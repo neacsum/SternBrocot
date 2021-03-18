@@ -26,11 +26,14 @@
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
+#include "sieve.h"
 
 //Uncomment next line to see a printout of the first few levels of the
 //Stern-Brocot tree
 
 //#define SHOW_TREE
+
+bool opt_factorize = false;
 
 // A node in the Stern-Brocot tree
 struct sbnode {
@@ -121,10 +124,47 @@ void grow (sbnode *node)
 #endif
 }
 
+//Primes used for factorization 
+sieve sv (200000);
+
+// Try to decompose a number in prime factors
+void print_factors (int n)
+{
+  std::vector<unsigned int> factors;
+
+  int ret = sv.factor (n, factors);
+  if (ret == 1)
+    printf ("%d is prime\n", n);
+  else if (ret == -1)
+    printf ("Could not find factors of %d\n", n);
+  else
+  {
+    printf ("Factors of %d = ", n);
+    int prev = factors[0], exp = 1;
+    for (int i = 1; i < factors.size (); i++)
+    {
+      if (factors[i] != prev)
+      {
+        printf ("%d", prev);
+        if (exp > 1)
+          printf ("^%d", exp);
+        printf ("*");
+        exp = 1;
+        prev = factors[i];
+      }
+      else
+        exp++;
+    }
+    printf ("%d", prev);
+    if (exp > 1)
+      printf ("^%d", exp);
+    printf ("\n");
+  }
+}
 
 int main (int argc, char **argv)
 {
-
+  int i;
 #ifdef SHOW_TREE
   root = new sbnode (nullptr);
   root->p = root->q = 1;
@@ -158,11 +198,42 @@ int main (int argc, char **argv)
 
   if (argc < 3)
   {
-    printf ("Usage: sba <number> <decimals>\n");
+    printf ("Usage: sba [-f] <number> <decimals>\n"
+            " -f  = show prime factorizations for each fraction\n");
     exit (1);
   }
-  double x = atof (argv[1]);
-  int n = atoi (argv[2]);
+  i = 0;
+  if (*argv[++i] == '-')
+  {
+    if (*++argv[i] == 'f')
+    {
+      opt_factorize = true;
+    }
+    else
+    {
+      printf ("Invalid option %s\n", argv[i]);
+      exit (1);
+    }
+  }
+  else
+    i--;
+  double x = atof (argv[++i]);
+  if (x <= 0)
+  {
+    printf ("Stern-Brocot approximation works only for positive numbers!\n");
+    exit (1);
+  }
+  if (i >= argc)
+  {
+    printf ("Required argument missing!\n");
+    exit (1);
+  }
+  int n = atoi (argv[++i]);
+  if (n <= 0)
+  {
+    printf ("Number of decimals must be positive!\n");
+    exit (1);
+  }
 
   double eps = pow (10., -n);
 
@@ -176,11 +247,17 @@ int main (int argc, char **argv)
   //starting point is tree root
   sbnode *crt = root;
   double approx = 1.;
-
-  while (fabs (x - approx) > eps)
+  
+  do
   {
     printf ("Current approximation %d/%d = %.7lf (err=%.2le)\n", crt->p, crt->q, approx, x-approx);
-    
+    if (opt_factorize)
+    {
+      print_factors (crt->p);
+      print_factors (crt->q);
+      printf ("\n");
+    }
+
     //move left or right
     if (x > approx)
       crt = crt->right;
@@ -192,9 +269,15 @@ int main (int argc, char **argv)
 
     //recalculate approximation
     approx = (double)crt->p / (double)crt->q;
-  }
+  } while (fabs (x - approx) > eps);
+
   printf ("\nFound fraction %d/%d = %.*lf\n", crt->p, crt->q, n+1, approx);
   printf ("Error= %.2le\n", x - approx);
+  if (opt_factorize)
+  {
+    print_factors (crt->p);
+    print_factors (crt->q);
+  }
 
   //cleanup
   delete root;
